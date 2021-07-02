@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     unsigned char response[300];
     unsigned short lenr = sizeof(response);
     unsigned short i;
-    ctn = 1;
+    ctn = 2;
     pn = 1;
     // Initialize card terminal
     ret = CT_init(ctn, pn);

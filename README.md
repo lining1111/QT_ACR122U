@@ -16,3 +16,19 @@ sudo killall pcscd
 sudo pcscd -fd
 
 重新启动服务，然后才起作用
+
+对于上面问题的解决方法是，应该是系统apt安装了pcscd，和源码安装的那个冲突了，需要卸载apt安装的pcscd
+
+sudo apt remove pcscd
+
+将pcsclite源码安装到系统，这时pcscd服务应该有些问题，需要操作
+
+sudo systemctl unmask pcscd.service
+
+sudo systemctl unmask pcscd.socket
+
+到这里旧的服务痕迹就修理完毕，重新是能服务就好
+
+sudo systemctl enable pcscd.service
+
+终端测试pscsd服务 pscs_scan 如果有读卡器连接就有显示了，同时应用程序也正常了

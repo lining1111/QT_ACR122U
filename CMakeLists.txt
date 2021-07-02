@@ -13,7 +13,7 @@ set(REQUIRED_LIBS_QUALIFIED Qt5::Core Qt5::Gui Qt5::Widgets)
 
 include_directories(/usr/local/include/PCSC)
 
-set(LINK_LIBS m pthread pcsclite ctacs)
+set(LINK_LIBS m pthread pcsclite)
 
 add_executable(${PROJECT_NAME} main.cpp)
 

@@ -1,0 +1,146 @@
+; This script will initialize an ACOS6-SAM and ACOS3 card and attempt to complete a mutual authentication process.
+; This script uses 3DES Keys for Mutual Authentication.
+
+; Map Reader Index [0] to the ACOS6-SAM Reader
+[MAP] [0] [1]
+
+; Map Reader Index [1] to the ACOS3 Reader
+[MAP ][1] [0]
+
+; ==================================================================
+; ACOS6-SAM Initialization Routines
+; ==================================================================
+; Clear the ACOS6-SAM Card
+[0] 80 30 00 00 00 (90 00)
+
+; Reset after clear card operation
+[RST] [1]
+
+; Create the MF 
+[0] 00 E0 00 00 0E 62 0C 80 02 2C 00 82 02 3F FF 83 02 3F 00 (90 00)
+
+; Create the DF 11 00
+[0] 00 E0 00 00 2B 62 29 82 01 38 83 02 11 00 8A 01 01 8C 08 7F 03 03 03 03 03 03 03 8D 02 41 03 80 02 03 20 AB 0B 84 01 88 A4 06 83 01 81 95 01 FF (90 00)
+
+; Create the Key File EF2 11 01
+[0] 00 E0 00 00 1D 62 1B 82 05 0C 41 00 16 08 83 02 11 01 88 01 02 8A 01 01 8C 08 7F 03 03 03 03 03 03 03 (90 00)
+
+; Set Key for Card Key, ID=0x81, Key Type = 0x03, Internal/External Authenticate, Usage Counter = 0xFF 0xFF
+[0] 00 E2 00 00 16 81 03 FF FF 88 00 11 22 33 44 55 66 77 88 99 00 AA BB CC DD EE FF (90 00)
+
+; Set Key for Terminal Key, ID=0x82, Key Type = 0x03, Internal/External Authenticate, Usage Counter = 0xFF 0xFF
+[0] 00 E2 00 00 16 82 03 FF FF 88 00 FF EE DD CC BB AA 00 99 88 77 66 55 44 33 22 11 (90 00)
+
+; ==================================================================
+; ACOS3 Initialization Routines
+; ==================================================================
+; Submit the ACOS3 Issuer Code. Default is ACOSTEST (41 43 4F 53 54 45 53 54)
+[1] 80 20 07 00 08 41 43 4F 53 54 45 53 54 (90 00)
+
+; Clear the ACOS3 Card
+[1] 80 30 00 00 00 (90 00)
+
+; Reset after clear card operation
+[RST] [0]
+
+; ==================================================================
+; Generate the diversified keys for ACOS3
+; ==================================================================
+; Select the ACOS6-SAM MF 3F00
+[0] 00 A4 00 00 02 3F 00 (61 XX)
+
+; Select the ACOS6-SAM DF 1100
+[0] 00 A4 00 00 02 11 00 (61 XX)
+
+; Submit the ACOS3 Issuer Code. Default is ACOSTEST (41 43 4F 53 54 45 53 54)
+[1] 80 20 07 00 08 41 43 4F 53 54 45 53 54 (90 00)
+
+; Select the ACOS3 Personalization File FF 03
+[1] 80 A4 00 00 02 FF 02 (90 00)
+
+; Update the ACOS3 Personalization File and set the 3DES Option Bit
+[1] 80 D2 00 00 04 02 00 00 00 (90 00)
+
+; Get the ACOS3 Serial Number. This will be used for Key Diversification
+; Select the Manufacturer File FF 00
+[1] 80 A4 00 00 02 FF 00 (90 00)
+
+; Read Record 0 to get the Card Serial Number
+[1] 80 B2 00 00 08 [V1 V2 V3 V4 V5 V6 V7 V8] (90 00)
+
+; Complement the Card Serial Number. This will be used to generate the right half of the keys
+[NOT] [V1 V2 V3 V4 V5 V6 V7 V8] [V11 V12 V13 V14 V15 V16 V17 V18]
+
+; Select Security File FF 03 in ACOS3
+[1] 80 A4 00 00 02 FF 03 (90 00)
+
+; ==================================================================
+; Generate and inject the diversified Card Key
+; ==================================================================
+; Generate the Left Half of Diversified Card Key using the Card Serial Number
+[0] 80 88 00 81 08 V1 V2 V3 V4 V5 V6 V7 V8 (61 08)
+
+; Issue Get Response to get the generated Key
+[0] 00 C0 00 00 08 [V21 V22 V23 V24 V25 V26 V27 V28] (90 00)
+
+; Generate the Right Half of Diversified Card Key using the Complemented Card Serial Number
+[0] 80 88 00 81 08 V11 V12 V13 V14 V15 V16 V17 V18 (61 08)
+
+; Issue Get Response to get the generated Key
+[0] 00 C0 00 00 08 [V31 V32 V33 V34 V35 V36 V37 V38] (90 00)
+
+; Update Record 0x02 of FF 03 to inject the Left Half of the Card Key
+[1] 80 D2 02 00 08 V21 V22 V23 V24 V25 V26 V27 V28 (90 00)
+
+; Update Record 0x0C of FF 03 to inject the Right Half of the Card Key
+[1] 80 D2 0C 00 08 V31 V32 V33 V34 V35 V36 V37 V38 (90 00)
+
+; ==================================================================
+; Generate and inject the diversified Terminal Key
+; ==================================================================
+; Generate the Left Half of Diversified Terminal Key using the Card Serial Number
+[0] 80 88 00 82 08 V1 V2 V3 V4 V5 V6 V7 V8 (61 08)
+
+; Issue Get Response to get the generated Key
+[0] 00 C0 00 00 08 [V41 V42 V43 V44 V45 V46 V47 V48] (90 00)
+
+; Generate the Right Half of Diversified Terminal Key using the Complemented Card Serial Number
+[0] 80 88 00 82 08 V11 V12 V13 V14 V15 V16 V17 V18 (61 08)
+
+; Issue Get Response to get the generated Key
+[0] 00 C0 00 00 08 [V51 V52 V53 V54 V55 V56 V57 V58] (90 00)
+
+; Update Record 0x03 of FF 03 to inject the Left Half of the Card Key
+[1] 80 D2 03 00 08 V41 V42 V43 V44 V45 V46 V47 V48 (90 00)
+
+; Update Record 0x0D of FF 03 to inject the Right Half of the Card Key
+[1] 80 D2 0D 00 08 V51 V52 V53 V54 V55 V56 V57 V58 (90 00)
+
+; ==================================================================
+; Execute Mutual Authentication of ACOS6-SAM and ACOS3
+; ==================================================================
+; Get a card challenge / random number from ACOS3
+[1] 80 84 00 00 08 [V61 V62 V63 V64 V65 V66 V67 V68] (90 00)
+
+; Diversify the Card Key in the ACOS6-SAM for Mutual Authentication using the ACOS3 card serial number
+[0] 80 72 04 81 08 V1 V2 V3 V4 V5 V6 V7 V8 (90 00)
+
+; Diversify the Terminal Key in the ACOS6-SAM for Mutual Authentication using the ACOS3 card serial number
+[0] 80 72 03 82 08 V1 V2 V3 V4 V5 V6 V7 V8 (90 00)
+
+; Authenticate the ACOS6-SAM to the ACOS3 (Terminal Authentication)
+[0] 80 78 00 00 08 V61 V62 V63 V64 V65 V66 V67 V68 (61 10)
+
+; Issue Get Response to get ENC(Rndc, Kt) || RNDt
+[0] 00 C0 00 00 10 [V71 V72 V73 V74 V75 V76 V77 V78 V79 V80 V81 V82 V83 V84 V85 V86] (90 00)
+
+; Authenticate the ACOS3 to the ACOS6-SAM (Card Authentication)
+[1] 80 82 00 00 10 V71 V72 V73 V74 V75 V76 V77 V78 V79 V80 V81 V82 V83 V84 V85 V86 [V91 V92 V93 V94 V95 V96 V97 V98] (61 08)
+
+; Issue Get Response to get ENC(Rndt, Ks)
+[1] 80 C0 00 00 08 [V91 V92 V93 V94 V95 V96 V97 V98] (90 00)
+
+; Verify the Authentication in the ACOS6-SAM
+[0] 80 7A 00 00 08 V91 V92 V93 V94 V95 V96 V97 V98 (90 00)
+
+; If the final result is 90 00, then ACOS6-SAM and ACOS3 have been mutually authenticated.

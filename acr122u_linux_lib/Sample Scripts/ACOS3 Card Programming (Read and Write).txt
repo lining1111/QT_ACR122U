@@ -1,0 +1,77 @@
+; /////////////////////////////////////////////////////////////////////
+;  ACOS3 Read Write
+; /////////////////////////////////////////////////////////////////////
+; This script will provide a sample APDU sequence in performing the ACOS3 read/write operations
+
+; Submit default IC
+[0] 80 20 07 00 08 41 43 4F 53 54 45 53 54 (90 00)
+
+; Clear card
+[0] 80 30 00 00 00 (90 00)
+
+; Reset the connection to the card
+[RST] [0]
+
+;**********************************************************
+; Format the ACOS3 card
+
+; Submit default IC
+[0] 80 20 07 00 08 41 43 4F 53 54 45 53 54 (90 00)
+
+; Select FF 02
+[0] 80 A4 00 00 02 FF 02 (90 00)
+
+; Configure FF 02
+; This wil allocate 3 records in the user file data area
+[0] 80 D2 00 00 04 00 00 03 00 (90 00)
+
+; Reset the connection to the card
+[RST] [0]
+
+; Select FF 04
+[0] 80 A4 00 00 02 FF 04 (90 00)
+
+; Submit the default issuer code
+[0] 80 20 07 00 08 41 43 4F 53 54 45 53 54 (90 00)
+
+; Define AA 11
+; This will create 3 records of 10 bytes length
+[0] 80 D2 00 00 07 0A 03 00 00 AA 11 00 (90 00)
+
+; Define BB 22
+; Thsi will create 2 records of 16 bytes length
+[0] 80 D2 01 00 07 10 02 00 00 BB 22 00 (90 00)
+
+; Define CC 33
+; This will create 4 records of 32 bytes length
+[0] 80 D2 02 00 07 20 04 00 00 CC 33 00 (90 00)
+
+;**********************************************************
+; Perform read/write operations
+
+; Select AA 11
+[0] 80 A4 00 00 02 AA 11 (91 XX)
+
+; Update AA 11
+[0] 80 D2 00 00 0A 30 31 32 33 34 35 36 37 38 39 (90 00)
+
+; Read AA 11
+[0] 80 B2 00 00 0A [30 31 32 33 34 35 36 37 38 39] (90 00)
+
+; Select BB 22
+[0] 80 A4 00 00 02 BB 22 (91 XX)
+
+; Update BB 22
+[0] 80 D2 00 00 10 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 (90 00)
+
+; Read BB 22
+[0] 80 B2 00 00 10 [31 31 31 31 31 31 31 31 31 31 31 31 31 31 31 31] (90 00)
+
+; Select CC 33
+[0] 80 A4 00 00 02 CC 33 (91 XX)
+
+; Update CC 33
+[0] 80 D2 00 00 20 61 61 61 61 61 61 61 61 61 61 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 (90 00)
+
+; Read CC 33
+[0] 80 B2 00 00 20 [61 61 61 61 61 61 61 61 61 61 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00] (90 00)

@@ -1,0 +1,59 @@
+; /////////////////////////////////////////////////////////////////////
+;  Mifare Card Programming
+; /////////////////////////////////////////////////////////////////////
+; This script demonstrates the APDU commands used in Mifare card programming
+
+; Load Authentication Key
+; Key Storage = Volatile Memory
+; Key = [FF FF FF FF FF FF]
+[0] FF 82 00 00 06 FF FF FF FF FF FF (90 00)
+
+; Authenticate Mifare Sector
+; Key Source = Volatile Memory
+; Key Type = Key A
+; Block Number = 20
+[0] FF 86 00 00 05 01 00 14 60 00 (90 00)
+
+; Update block
+; Start block = 20
+; Length = 16
+; Data = ACOSTEST
+[0] FF D6 00 14 10 41 43 4F 53 54 45 53 54 00 00 00 00 00 00 00 00 (90 00)
+
+; Read block
+; Start block = 20
+; Length = 16
+[0] FF B0 00 14 10 [41 43 4F 53 54 45 53 54 00 00 00 00 00 00 00 00] (90 00)
+
+; Store Value 
+; Value amount = 5000
+; Block number = 21
+[0] FF D7 00 15 05 00 00 00 13 88 (90 00)
+
+; Increment
+; Value amount = 1234
+; Block number = 21
+[0] FF D7 00 15 05 01 00 00 04 D2 (90 00)
+
+; Decrement 
+; Value amount = 4321
+; Block numebr = 21
+[0] FF D7 00 15 05 02 00 00 10 E1 (90 00)
+
+; Read Value
+; Block number = 21
+[0] FF B1 00 15 04 [00 00 07 79] (90 00)
+
+; Restore Value
+; Copy the contents of the source block to the target block
+; Source block = 21
+; Target blcok = 22
+[0] FF D7 00 15 02 03 16 (90 00)
+
+; Read Value
+; Block number = 21
+[0] FF B1 00 15 04 [00 00 07 79] (90 00)
+
+; Read Value
+; Block number = 22
+[0] FF B1 00 16 04 [00 00 07 79] (90 00)

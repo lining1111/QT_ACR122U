@@ -1,0 +1,60 @@
+; /////////////////////////////////////////////////////////////////////
+;  Mifare Ultralight C Card Programming
+; /////////////////////////////////////////////////////////////////////
+; This script demonstrates the APDU commands used in Mifare Ultralight C card programming
+
+; Get Serial Number
+; contains 7-byte serial number of the card
+[0] FF CA 00 00 00 [XX XX XX XX XX XX XX] (90 00)
+
+; Start Transparent Session
+[0] FF C2 00 00 02 81 00 [C0 03 00 90 00] (90 00) 
+
+; Mifare Ultralight Backward Compatibility
+; Write Binary
+; Page number = 32
+; data = abcd
+[0] FF D6 00 20 04 61 62 63 64 (90 00) 
+
+; Read Binary
+; Page number = 32
+[0] FF B0 00 20 04 [61 62 63 64] (90 00)
+
+
+; Mifare Ultralight C Functionality
+; Write Binary
+; Page number = 37 
+; data = abcd
+[0] FF D6 00 25 04 61 62 63 64 (90 00) 
+
+; Read Binary
+; Page number = 37
+[0] FF B0 00 25 04 [61 62 63 64] (90 00)
+
+; Counter has maximum count of 65,535 (0xFFFF)
+; Read Counter Page
+[0] FF B0 00 29 04 [XX XX XX XX] (90 00) 
+
+; Lock Bytes are used to permanently restrict write-access
+; Read Lock Bytes Page (02h)
+[0] FF B0 00 02 04 [XX XX XX XX] (90 00) 
+
+; Read Lock Bytes Page (28h)
+[0] FF B0 00 28 04 [XX XX XX XX] (90 00) 
+
+; One Time Programmable (OTP) Data [change is irreversible]
+; Read OTP Page
+[0] FF B0 00 03 04 [XX XX XX XX] (90 00) 
+
+; Read Authentication 0 Page (2Ah)
+; XX is the starting page where authentication is required
+[0] FF B0 00 2A 04 [XX 00 00 00] (90 00) 
+
+; Read Authenticaiton 1 Page (2Bh)
+; XX specifies what action requires authentication
+; 	= 00 - both Read and Write
+; 	= 01 - write operation only
+[0] FF B0 00 2B 04 [XX 00 00 00] (90 00)
+
+; End Transparent Session
+[0] FF C2 00 00 02 82 00 [C0 03 00 90 00] (90 00)

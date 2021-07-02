@@ -1,0 +1,212 @@
+;ACOS6 Test Script
+
+;.RESET
+[RST][0]
+;----------------------------------------------------------------------
+; Card Properties
+;----------------------------------------------------------------------
+;Get Card Info - Card Serial Number
+80 14 00 00 08 (90 00)
+
+;Get Card Info - Card Version
+;Returns the version number of the ACOS6-SAM in the form of  ACOS6 Revison XX YY ZZh (41 43 4F 53 06 XX YY ZZh)
+80 14 06 00 08 (90 00)
+
+;Get Card Info - Card ID Number
+80 14 04 00 06 (90 00)
+
+;Get Card Info - EEPROM Size
+80 14 05 00 00 (90 XX)
+;----------------------------------------------------------------------
+; File Commands - Create File
+;----------------------------------------------------------------------
+;Clear Card
+80 30 00 00 00 (90 00)
+
+;.RESET
+[RST][0]
+
+;Create File MF
+00 E0 00 00 1E 62 1C 82 01 3F 83 02 3F 00 8A 01 01 8C 08 7F 00 00 00 00 00 00 00 8D 02 00 00 87 02 00 00 (90 00)
+
+;Create File DF 01
+00 E0 00 00 2C 62 2A 82 01 38 83 02 DF 01 84 0C 54 65 73 74 20 46 69 6C 65 20 30 31 8A 01 01 8C 08 7F 00 00 00 00 00 00 00 8D 02 00 00 87 02 00 00 (90 00)
+
+;Create File DF 02
+00 E0 00 00 2C 62 2A 82 01 38 83 02 DF 02 84 0C 54 45 53 54 20 46 49 4C 45 20 30 32 8A 01 01 8C 08 7F 00 00 00 00 00 00 00 8D 02 00 00 87 02 00 00 (90 00)
+
+;Select File By File ID DF 01
+00 A4 00 00 02 DF 01 (61 XX)
+;61 2E Issue GET RESPONESE with P3 = 2E to retrieve data
+
+;Create File Transparent EF 11
+00 E0 00 00 1A 62 18 80 02 00 10 82 01 01 83 02 EF 11 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+;Create File Linear Fixed EF 12
+00 E0 00 00 1A 62 18 82 05 02 00 00 10 03 83 02 EF 12 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+;Create File Linear Fixed EF 13
+00 E0 00 00 1A 62 18 82 05 04 00 00 10 03 83 02 EF 13 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+;Create File
+00 E0 00 00 1A 62 18 82 05 06 00 00 10 03 83 02 EF 14 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+;Select File By File ID EF 11
+00 A4 00 00 02 EF 11 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+;----------------------------------------------------------------------
+; File Commands - Update/Read Binary, Update/Append/Read Record
+;----------------------------------------------------------------------
+;Update Binary
+00 D6 00 00 10 54 45 53 54 20 42 49 4E 41 52 59 20 44 41 54 41 (90 00)
+
+;Read Binary
+00 B0 00 00 10 (90 00)
+
+;Select File By File ID Linear Fixed EF 12
+00 A4 00 00 02 EF 12 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+;Update Record
+00 DC 00 01 10 54 45 53 54 20 52 45 43 4F 52 44 20 44 41 54 41 (90 00)
+
+;Read Record
+00 B2 03 04 10 (90 00)
+
+;Select File By File ID Linear Variable EF 13
+00 A4 00 00 02 EF 13 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+;Append Record
+00 E2 00 00 10 41 50 50 45 4E 44 45 44 20 52 45 43 4F 52 44 00 (90 00)
+
+
+;Read Record
+00 B2 00 00 10 (90 00)
+
+;Select File By File ID Cyclic EF 14
+00 A4 00 00 02 EF 14 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+;Update Record
+00 DC 00 00 10 43 59 43 4C 49 43 20 52 45 43 4F 52 44 00 00 00 (90 00)
+
+;Read Record
+00 B2 01 04 10 (90 00)
+
+;----------------------------------------------------------------------
+; File Commands - PIN/KEY File, Get File COunt, Get File Information
+;----------------------------------------------------------------------
+;Select File By File ID DF 01
+00 A4 00 00 02 DF 01 (61 XX)
+;61 2E Issue GET RESPONESE with P3 = 2E to retrieve data
+
+;Create File - PIN EF 01
+00 E0 00 00 1D 62 1B 82 05 0C 00 00 08 03 83 02 EF 01 88 01 01 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+;Create File - KEY EF 02
+00 E0 00 00 1D 62 1B 82 05 0C 00 00 16 06 83 02 EF 02 88 01 02 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+;Select File By File ID PIN EF 01
+00 A4 00 00 02 EF 01 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+;Append Record
+00 E2 00 00 08 81 FF 11 11 11 11 11 11 (90 00)
+
+;Select File By File ID KEY EF 02
+00 A4 00 00 02 EF 02 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+;Append Record
+00 E2 00 00 15 81 06 FF FF 00 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 (90 00)
+00 E2 00 00 16 82 0F FF FF FF 00 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 (90 00)
+00 E2 00 00 16 83 03 FF FF FF 00 33 33 33 33 33 33 33 33 33 33 33 33 33 33 33 33 (90 00)
+00 E2 00 00 15 84 06 FF FF 00 44 44 44 44 44 44 44 44 44 44 44 44 44 44 44 44 (90 00)
+00 E2 00 00 15 85 06 FF FF 00 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 (90 00)
+00 E2 00 00 15 86 06 FF FF 00 66 66 66 66 66 66 66 66 66 66 66 66 66 66 66 66 (90 00)
+
+;Select File By File ID DF 01
+00 A4 00 00 02 DF 01 (61 XX)
+;61 2E Issue GET RESPONESE with P3 = 2E to retrieve data
+
+;Get Card Info - File Count
+80 14 01 00 00 (90 XX)
+;90 07 
+
+;Select File By File ID 3F 00
+00 A4 00 00 02 3F 00 (61 XX)
+;61 22 Issue GET RESPONESE with P3 = 22 to retrieve data
+
+;----------------------------------------------------------------------
+; Card Security
+;----------------------------------------------------------------------
+; Clear card
+80 30 00 00 00 (90 00)
+
+; Reset card
+[RST] [0]
+
+; Create Master File
+00 E0 00 00 1E 62 1C 82 01 3F 83 02 3F 00 8A 01 01 8C 08 7F 00 00 00 00 00 00 00 8D 02 00 00 87 02 00 00 (90 00)
+
+; Create DF, ID = "DF 01", DF Long Name = "TEST File 01"
+00 E0 00 00 2C 62 2A 82 01 38 83 02 DF 01 84 0C 54 45 53 54 20 46 49 4C 45 20 30 31 8A 01 01 8C 08 7F 00 00 00 00 00 00 00 8D 02 00 00 87 02 00 00 (90 00)
+
+; Select "TEST FILE 01"
+00 A4 04 00 0C 54 45 53 54 20 46 49 4C 45 20 30 31 (61 XX)
+;61 2E Issue GET RESPONESE with P3 = 2E to retrieve data
+
+; Create PIN File
+00 E0 00 00 1D 62 1B 82 05 0C 00 00 08 03 83 02 EF 01 88 01 01 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+; Create Key File
+00 E0 00 00 1D 62 1B 82 05 0C 00 00 16 06 83 02 EF 02 88 01 02 8A 01 01 8C 08 7F 00 00 00 00 FF 00 00 (90 00)
+
+; Select PIN File
+00 A4 00 00 02 EF 01 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+; Append PIN Record 1 
+00 E2 00 00 08 81 FF 11 11 11 11 11 11 (90 00)
+
+; Select Key File
+00 A4 00 00 02 EF 02 (61 XX)
+;Issue GET RESPONSE with P3 = 20
+
+; Append Card Key
+00 E2 00 00 15 81 06 FF FF 00 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 11 (90 00)
+
+; Append Terminal Key
+00 E2 00 00 16 82 0F FF FF FF 00 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 22 (90 00)
+ 
+; Append Bulk Encryption Key
+00 E2 00 00 16 83 03 FF FF FF 00 33 33 33 33 33 33 33 33 33 33 33 33 33 33 33 33 (90 00)
+
+; Append Inquire Key
+00 E2 00 00 15 84 06 FF FF 00 44 44 44 44 44 44 44 44 44 44 44 44 44 44 44 44 (90 00)
+
+; Append Credit Key
+00 E2 00 00 15 85 06 FF FF 00 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 55 (90 00)
+
+; Append Debit Key
+00 E2 00 00 15 86 06 FF FF 00 66 66 66 66 66 66 66 66 66 66 66 66 66 66 66 66 (90 00)
+
+;Select File By File ID DF 01
+00 A4 00 00 02 DF 01 (61 XX)
+;61 2E Issue GET RESPONESE with P3 = 2E to retrieve data
+
+;======================================================================================
+; Use these routines when using an ACOS6 - Verify/ Change PIN
+; Comment these commands when NOT using an ACOS6
+;======================================================================================
+
+;Verify PIN
+00 20 00 81 06 11 11 11 11 11 11 (90 00)
+
+;Change PIN
+00 24 00 81 06 22 22 22 22 22 22 (90 00)
+
+;Verify New PIN
+00 20 00 81 06 22 22 22 22 22 22 (90 00)

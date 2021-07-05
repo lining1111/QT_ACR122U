@@ -11,7 +11,7 @@ set(QT_VERSION 5)
 set(REQUIRED_LIBS Core Gui Widgets)
 set(REQUIRED_LIBS_QUALIFIED Qt5::Core Qt5::Gui Qt5::Widgets)
 
-include_directories(/usr/include/PCSC)
+include_directories(/usr/local/include/PCSC)
 
 set(LINK_LIBS m pthread pcsclite)
 

@@ -31,3 +31,10 @@ sudo systemctl unmask pcscd.socket
 sudo systemctl enable pcscd.service
 
 终端测试pscsd服务 pscs_scan 如果有读卡器连接就有显示了，同时应用程序也正常了
+
+##20210706
+完成pcsc uuid nfc环境的搭建和测试，准备通过nfc读取m1卡信息。(其实在nfc上面还有一层，就是freefare，专门用来读取m1卡的库)
+但是，介于后面卡的多样性扩展需要，暂时在nfc层进行读写。
+
+工程中 nfc文件夹下，NFC_Operate是主要调用类，其他文件都是从libnfc库源文件的utils文件夹下拷贝的，其实命令行中
+nfc-list就是utils下编译出来的。**所以说优秀的基础类程序，既有完整的例子，还的有可执行的程序做测试，这点很重要**

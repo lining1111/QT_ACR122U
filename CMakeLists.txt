@@ -12,10 +12,21 @@ set(REQUIRED_LIBS Core Gui Widgets)
 set(REQUIRED_LIBS_QUALIFIED Qt5::Core Qt5::Gui Qt5::Widgets)
 
 include_directories(/usr/local/include/PCSC)
+include_directories(include)
 
-set(LINK_LIBS m pthread pcsclite)
+set(SRC_DIRS src
+        src/nfc
+        )
 
-add_executable(${PROJECT_NAME} main.cpp)
+foreach (src_dir ${SRC_DIRS})
+    aux_source_directory(${src_dir} src_dir_file)
+    set(SRC_FILES ${SRC_FILES} ${src_dir_file})
+endforeach (src_dir)
+
+
+set(LINK_LIBS m pthread pcsclite nfc)
+
+add_executable(${PROJECT_NAME} main.cpp ${SRC_FILES})
 
 if (NOT CMAKE_PREFIX_PATH)
     message(WARNING "CMAKE_PREFIX_PATH is not defined, you may need to set it "

@@ -4,7 +4,9 @@
 
 #include "nfc/NFC_Operate.h"
 
+
 int main(int argc, const char *argv[]) {
+
     NFC_Operate *nfcOperate = new NFC_Operate();
     nfcOperate->Open();
     nfcOperate->SelectDevice(1);

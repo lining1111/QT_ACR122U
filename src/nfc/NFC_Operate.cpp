@@ -335,10 +335,10 @@ int NFC_Operate::GetSelectCardUid(CardType cardType, int index, uint8_t *uid, in
                     printf("index:%d big than max:%d.\n", index, (res - 1));
                     ret = -1;
                 } else {
-                    if (uid_len >= ant[index].nti.nai.szUidLen) {
+                    if (uid_len >= 4) {
                         //copy uid
-                        memcpy(uid, &ant[index].nti.nai.abtUid, ant[index].nti.nai.szUidLen);
-                        ret = ant[index].nti.nai.szUidLen;
+                        memcpy(uid, &ant[index].nti.nai.abtUid + ant[index].nti.nai.szUidLen - 4, 4);
+                        ret = 4;
                     } else {
                         ret = 0;
                     }
@@ -602,30 +602,171 @@ uint32_t NFC_Operate::mfclassic_GetTailerBlock(uint32_t blockNum) {
 }
 
 bool NFC_Operate::mfclassic_transmit_bits(uint8_t *tx, size_t tx_len, uint8_t *rx, size_t *rx_len) {
+    if (verbose) {
+        printf("Sent bits:     ");
+        print_hex_bits(tx, tx_len);
+    }
 
+    // Transmit the bit frame command, we don't use the arbitrary parity feature
+    *rx_len = nfc_initiator_transceive_bits(nfcDevice, tx, tx_len, nullptr, rx, MAX_FRAME_LEN, nullptr);
 
+    if (*rx_len < 0) {
+        return false;
+    }
 
-    return false;
+    if (verbose) {
+        printf("Received bits: ");
+        print_hex_bits(rx, *rx_len);
+    }
+
+    return true;
 }
 
 bool NFC_Operate::mfclassic_transmit_bytes(uint8_t *tx, size_t tx_len, uint8_t *rx, size_t *rx_len) {
-    return false;
+    if (verbose) {
+        printf("Sent bits:     ");
+        print_hex_bits(tx, tx_len);
+    }
+
+    // Transmit the bit frame command, we don't use the arbitrary parity feature
+    *rx_len = nfc_initiator_transceive_bytes(nfcDevice, tx, tx_len, rx, MAX_FRAME_LEN, 0);
+
+    if (*rx_len < 0) {
+        return false;
+    }
+
+    if (verbose) {
+        printf("Received bits: ");
+        print_hex_bits(rx, *rx_len);
+    }
+
+    return true;
 }
 
 bool NFC_Operate::mfclassic_UnlockCard(bool isWrite) {
-    return false;
+    uint8_t rx[MAX_FRAME_LEN];
+    size_t rx_len = 0;
+    // Configure the CRC
+    if (nfc_device_set_property_bool(nfcDevice, NP_HANDLE_CRC, false) < 0) {
+        nfc_perror(nfcDevice, "nfc_configure");
+        return false;
+    }
+
+    // Use raw send/receive methods
+    if (nfc_device_set_property_bool(nfcDevice, NP_EASY_FRAMING, false) < 0) {
+        nfc_perror(nfcDevice, "nfc_configure");
+        return false;
+    }
+
+    iso14443a_crc_append(abtHalt, 2);
+    mfclassic_transmit_bytes(abtHalt, 4, rx, &rx_len);
+    // now send unlock
+    if (!mfclassic_transmit_bits(abtUnlock1, 7, rx, &rx_len)) {
+        printf("Warning: Unlock command [1/2]: failed / not acknowledged.\n");
+        dWrite = true;
+        if (isWrite) {
+            printf("Trying to rewrite block 0 on a direct write tag.\n");
+        }
+    } else {
+        if (mfclassic_transmit_bytes(abtUnlock2, 1, rx, &rx_len)) {
+            printf("Card unlocked\n");
+            unlocked = true;
+        } else {
+            printf("Warning: Unlock command [2/2]: failed / not acknowledged.\n");
+        }
+    }
+
+    // reset reader
+    if (!unlocked) {
+        if (nfc_initiator_select_passive_target(nfcDevice, nmMifare, nt.nti.nai.abtUid, nt.nti.nai.szUidLen, NULL) <=
+            0) {
+            printf("Error: tag was removed\n");
+        }
+        return true;
+    }
+    // Configure the CRC
+    if (nfc_device_set_property_bool(nfcDevice, NP_HANDLE_CRC, true) < 0) {
+        nfc_perror(nfcDevice, "nfc_device_set_property_bool");
+        return false;
+    }
+    // Switch off raw send/receive methods
+    if (nfc_device_set_property_bool(nfcDevice, NP_EASY_FRAMING, true) < 0) {
+        nfc_perror(nfcDevice, "nfc_device_set_property_bool");
+        return false;
+    }
+    return true;
 }
 
 bool NFC_Operate::mfclassic_AuthenticateCard(uint32_t blockNum) {
+    mifare_cmd mc;
+
+    // Set the authentication information (uid)
+    memcpy(mp.mpa.abtAuthUid, nt.nti.nai.abtUid + nt.nti.nai.szUidLen - 4, 4);
+
+    // Should we use key A or B?
+    mc = (bUseKeyA) ? MC_AUTH_A : MC_AUTH_B;
+
+    // try to guess the right key
+    for (size_t key_index = 0; key_index < 9; key_index++) {
+        memcpy(mp.mpa.abtKey, keys[key_index], 6);
+        if (nfc_initiator_mifare_cmd(nfcDevice, mc, blockNum, &mp)) {
+            if (bUseKeyA)
+                memcpy(mtKeys.amb[blockNum].mbt.abtKeyA, &mp.mpa.abtKey, sizeof(mtKeys.amb[blockNum].mbt.abtKeyA));
+            else
+                memcpy(mtKeys.amb[blockNum].mbt.abtKeyB, &mp.mpa.abtKey, sizeof(mtKeys.amb[blockNum].mbt.abtKeyB));
+            return true;
+        }
+        if (nfc_initiator_select_passive_target(nfcDevice, nmMifare, nt.nti.nai.abtUid, nt.nti.nai.szUidLen, NULL) <=
+            0) {
+            ERR("tag was removed");
+            return false;
+        }
+    }
+
     return false;
 }
 
 int NFC_Operate::mfclassic_ReadData(uint32_t blockNum, uint8_t *data, int data_size) {
-    return 0;
+    int ret = 0;
+    if (nfc_initiator_mifare_cmd(nfcDevice, MC_READ, blockNum, &mp)) {
+        memcpy(data, mp.mpd.abtData, sizeof(mp.mpd.abtData));
+        ret = 0;
+    } else {
+        printf("read block %d fail.\n", blockNum);
+        ret = -1;
+    }
+
+    return ret;
 }
 
 int NFC_Operate::mfclassic_WriteData(uint32_t blockNum, uint8_t *data, int data_size) {
-    return 0;
+    int ret = 0;
+    bzero(mp.mpd.abtData, sizeof(mp.mpd.abtData));
+    if (data_size > 16) {
+        data_size = 16;
+    }
+
+    memcpy(mp.mpd.abtData, data, data_size);
+
+    //1.写第一块的时候，要对前5个字节进行校验验证，关系uid
+    if (blockNum == 0) {
+        if ((mp.mpd.abtData[0] ^ mp.mpd.abtData[1] ^ mp.mpd.abtData[2] ^ mp.mpd.abtData[3] ^ mp.mpd.abtData[4]) !=
+            0x00) {
+            printf("!\nError: incorrect BCC in MFD file!\n");
+            printf("Expecting BCC=%02X\n",
+                   mp.mpd.abtData[0] ^ mp.mpd.abtData[1] ^ mp.mpd.abtData[2] ^ mp.mpd.abtData[3]);
+            return -1;
+        }
+    }
+
+    if (nfc_initiator_mifare_cmd(nfcDevice, MC_WRITE, blockNum, &mp)) {
+        ret = 0;
+    } else {
+        printf("write block %d fail.\n", blockNum);
+        ret = -1;
+    }
+
+    return ret;
 }
 
 int NFC_Operate::Close() {

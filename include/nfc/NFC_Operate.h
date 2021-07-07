@@ -7,6 +7,7 @@
 
 #include <nfc/nfc.h>
 #include "nfc/nfc-utils.h"
+#include "nfc/mifare.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -31,12 +32,40 @@ public:
         BARCODE_106,
     };
 
+    //mifare
+    const nfc_modulation nmMifare = {
+            .nmt = NMT_ISO14443A,
+            .nbr = NBR_106,
+    };
+    mifare_param mp;
+    mifare_classic_tag mtKeys;
+    bool bUseKeyA = true;
+    bool dWrite = false;
+    bool unlocked = false;
+    uint8_t abtHalt[4] = {0x50, 0x00, 0x00, 0x00};
+    uint8_t abtUnlock1[1] = {0x40};
+    uint8_t abtUnlock2[1] = {0x43};
+
+    ///<可能有用的密码
+    const uint8_t keys[9][6]={
+            {0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
+            {0xd3, 0xf7, 0xd3, 0xf7, 0xd3, 0xf7},
+            {0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5},
+            {0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5},
+            {0x4d, 0x3a, 0x99, 0xc3, 0x51, 0xdd},
+            {0x1a, 0x98, 0x2c, 0x7e, 0x45, 0x9a},
+            {0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff},
+            {0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
+            {0xab, 0xcd, 0xef, 0x12, 0x34, 0x56}
+    };
+
 public:
     nfc_context *context = nullptr;
     nfc_connstring devices[MAX_DEVICE_COUNT];
     size_t device_count = 0;
     int device_index = 0;
     nfc_device *nfcDevice = nullptr;
+    nfc_target nt;
     /**
      * 支持卡面的种类,会影响nfc_modulation的设置
      * 0x01:NMT_ISO14443A
@@ -144,7 +173,7 @@ public:
      * @param rx_len out 输出数据长度
      * @return
      */
-    static bool mfclassic_transmit_bits(uint8_t *tx, size_t tx_len, uint8_t *rx, size_t *rx_len);
+    bool mfclassic_transmit_bits(uint8_t *tx, size_t tx_len, uint8_t *rx, size_t *rx_len);
 
     /**
     * mifare 传输byts
@@ -154,7 +183,7 @@ public:
     * @param rx_len out 输出数据长度
     * @return
     */
-    static bool mfclassic_transmit_bytes(uint8_t *tx, size_t tx_len, uint8_t *rx, size_t *rx_len);
+    bool mfclassic_transmit_bytes(uint8_t *tx, size_t tx_len, uint8_t *rx, size_t *rx_len);
 
     /**
      * 解锁卡
